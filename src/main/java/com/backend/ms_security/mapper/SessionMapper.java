@@ -1,0 +1,42 @@
+package com.backend.ms_security.mapper;
+
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.backend.ms_security.dto.session.CreateSessionDTO;
+import com.backend.ms_security.dto.session.SessionResponseDTO;
+import com.backend.ms_security.dto.session.UpdateSessionDTO;
+import com.backend.ms_security.entity.Session;
+
+@Component
+public class SessionMapper {
+    public Session toEntity(CreateSessionDTO dto) {
+        Session session = new Session();
+        session.setToken(dto.getToken());
+        session.setExpiration(dto.getExpiration());
+        session.setCode2FA(dto.getCode2FA());
+        return session;
+    }
+
+    public void updateEntity(UpdateSessionDTO dto, Session session) {
+        session.setToken(dto.getToken());
+        session.setExpiration(dto.getExpiration());
+        session.setCode2FA(dto.getCode2FA());
+    }
+
+    public SessionResponseDTO toResponseDTO(Session session) {
+        return new SessionResponseDTO(
+                session.getId(),
+                session.getToken(),
+                session.getExpiration(),
+                session.getCode2FA()
+        );
+    }
+
+    public List<SessionResponseDTO> toResponseDTOList(List<Session> sessions) {
+        return sessions.stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+}
