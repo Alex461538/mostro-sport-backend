@@ -1,6 +1,6 @@
 package com.backend.ms_security.dto.session;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import lombok.Value;
 
@@ -8,6 +8,6 @@ import lombok.Value;
 public class SessionResponseDTO {
     Long id;
     String token;
-    Date expiration;
+    ZonedDateTime expiration;
     String code2FA;
 }

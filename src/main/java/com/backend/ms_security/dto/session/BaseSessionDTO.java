@@ -1,6 +1,6 @@
 package com.backend.ms_security.dto.session;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +14,7 @@ public abstract class BaseSessionDTO {
     private String token;
 
     @NotNull(message = "The expiration date is mandatory.")
-    private Date expiration;
+    private ZonedDateTime expiration;
 
     @NotBlank(message = "The 2FA code is mandatory.")
     private String code2FA;

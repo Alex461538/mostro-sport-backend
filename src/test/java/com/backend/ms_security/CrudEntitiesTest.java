@@ -2,7 +2,7 @@ package com.backend.ms_security;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,12 +21,12 @@ class CrudEntitiesTest {
     void entitiesAndDtosShouldBeInstantiable() {
         Profile profile = new Profile();
         profile.setPhone("123456789");
-        profile.setBirthDate(new Date());
+        profile.setBirthDate(ZonedDateTime.now());
         assertNotNull(profile);
 
         Session session = new Session();
         session.setToken("token-123");
-        session.setExpiration(new Date());
+        session.setExpiration(ZonedDateTime.now());
         session.setCode2FA("456789");
         assertNotNull(session);
 
@@ -43,12 +43,12 @@ class CrudEntitiesTest {
 
         CreateProfileDTO profileDto = new CreateProfileDTO();
         profileDto.setPhone("987654321");
-        profileDto.setBirthDate(new Date());
+        profileDto.setBirthDate(ZonedDateTime.now());
         assertNotNull(profileDto);
 
         CreateSessionDTO sessionDto = new CreateSessionDTO();
         sessionDto.setToken("abc");
-        sessionDto.setExpiration(new Date());
+        sessionDto.setExpiration(ZonedDateTime.now());
         sessionDto.setCode2FA("123456");
         assertNotNull(sessionDto);
 

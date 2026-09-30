@@ -1,6 +1,6 @@
 package com.backend.ms_security.dto.profile;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,5 +16,5 @@ public abstract class BaseProfileDTO {
     private String phone;
 
     @NotNull(message = "The birth date is mandatory.")
-    private Date birthDate;
+    private ZonedDateTime birthDate;
 }
