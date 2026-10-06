@@ -6,11 +6,17 @@ import org.springframework.stereotype.Component;
 
 import com.backend.ms_security.dto.user.CreateUserDTO;
 import com.backend.ms_security.dto.user.UpdateUserDTO;
+import com.backend.ms_security.dto.user.UserDetailResponseDTO;
 import com.backend.ms_security.dto.user.UserResponseDTO;
 import com.backend.ms_security.entity.User;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class UserMapper {
+    private final ProfileMapper profileMapper;
+
     public User toEntity(CreateUserDTO dto) {
         User user = new User();
 
@@ -36,6 +42,15 @@ public class UserMapper {
                 user.getId(),
                 user.getName(),
                 user.getEmail()
+        );
+    }
+
+    public UserDetailResponseDTO toDetailResponseDTO(User user) {
+        return new UserDetailResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                profileMapper.toResponseDTO(user.getProfile())
         );
     }
 

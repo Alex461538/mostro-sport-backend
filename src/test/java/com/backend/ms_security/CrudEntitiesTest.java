@@ -14,15 +14,25 @@ import com.backend.ms_security.entity.Permission;
 import com.backend.ms_security.entity.Profile;
 import com.backend.ms_security.entity.Role;
 import com.backend.ms_security.entity.Session;
+import com.backend.ms_security.entity.User;
 
 class CrudEntitiesTest {
 
     @Test
     void entitiesAndDtosShouldBeInstantiable() {
+        User user = new User();
+        user.setName("Alice");
+        user.setEmail("alice@example.com");
+        user.setPassword("secret123");
+
         Profile profile = new Profile();
         profile.setPhone("123456789");
         profile.setBirthDate(ZonedDateTime.now());
+        profile.setUser(user);
+        user.setProfile(profile);
         assertNotNull(profile);
+        assertNotNull(profile.getUser());
+        assertNotNull(user.getProfile());
 
         Session session = new Session();
         session.setToken("token-123");

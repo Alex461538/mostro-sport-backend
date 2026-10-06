@@ -16,20 +16,31 @@ public class User {
     @GeneratedValue(
             strategy = GenerationType.IDENTITY
     )
-	long id;
+    private Long id;
+
     @Column(
             nullable = false,
             length = 100
     )
-	String name;
+    private String name;
+
     @Column(
             nullable = false,
             unique = true,
             length = 150
     )
-	String email;
+    private String email;
+
     @Column(
             nullable = false
     )
-	String password;
+    private String password;
+
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private Profile profile;
 }
