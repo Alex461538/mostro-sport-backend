@@ -9,6 +9,8 @@ import com.backend.ms_security.dto.user.CreateUserDTO;
 import com.backend.ms_security.dto.user.UpdateUserDTO;
 import com.backend.ms_security.dto.user.UserDetailResponseDTO;
 import com.backend.ms_security.dto.user.UserResponseDTO;
+import com.backend.ms_security.dto.user.UserRolesResponseDTO;
+import com.backend.ms_security.dto.user.UserSessionsResponseDTO;
 import com.backend.ms_security.service.ProfileService;
 import com.backend.ms_security.service.UserService;
 
@@ -46,6 +48,16 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDetailResponseDTO findById(@PathVariable Long id) {
         return userService.findById(id);
+    }
+
+    @GetMapping("/{id}/detail-with-sessions")
+    public UserSessionsResponseDTO findByIdAndSessions(@PathVariable Long id) {
+        return userService.findByIdAndSessions(id);
+    }
+
+    @GetMapping("/{id}/detail-with-roles")
+    public UserRolesResponseDTO findByIdAndRoles(@PathVariable Long id) {
+        return userService.findByIdAndRoles(id);
     }
     
     @PutMapping("/{id}")

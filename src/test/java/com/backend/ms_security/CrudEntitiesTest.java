@@ -15,6 +15,7 @@ import com.backend.ms_security.entity.Profile;
 import com.backend.ms_security.entity.Role;
 import com.backend.ms_security.entity.Session;
 import com.backend.ms_security.entity.User;
+import com.backend.ms_security.entity.UserRole;
 
 class CrudEntitiesTest {
 
@@ -38,12 +39,23 @@ class CrudEntitiesTest {
         session.setToken("token-123");
         session.setExpiration(ZonedDateTime.now());
         session.setCode2FA("456789");
+        session.setUser(user);
+        user.getSessions().add(session);
         assertNotNull(session);
+        assertNotNull(session.getUser());
+        assertNotNull(user.getSessions());
 
         Role role = new Role();
         role.setName("ADMIN");
         role.setDescription("Administrator");
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        user.getUserRoles().add(userRole);
+        role.getUserRoles().add(userRole);
         assertNotNull(role);
+        assertNotNull(userRole.getUser());
+        assertNotNull(userRole.getRole());
 
         Permission permission = new Permission();
         permission.setUrl("/api/users");

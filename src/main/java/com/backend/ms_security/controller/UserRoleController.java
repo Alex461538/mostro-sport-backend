@@ -1,0 +1,55 @@
+package com.backend.ms_security.controller;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.backend.ms_security.dto.userrole.AssignRoleDTO;
+import com.backend.ms_security.dto.userrole.RoleUserResponseDTO;
+import com.backend.ms_security.dto.userrole.UserRoleResponseDTO;
+import com.backend.ms_security.service.UserRoleService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class UserRoleController {
+    private final UserRoleService userRoleService;
+
+    @PostMapping("/user-roles")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserRoleResponseDTO assign(@Valid @RequestBody AssignRoleDTO dto) {
+        return userRoleService.assign(dto);
+    }
+
+    @GetMapping("/user-roles")
+    public List<UserRoleResponseDTO> findAll() {
+        return userRoleService.findAll();
+    }
+
+    @GetMapping("/user-roles/users/{userId}")
+    public List<UserRoleResponseDTO> findByUserId(@PathVariable Long userId) {
+        return userRoleService.findByUserId(userId);
+    }
+
+    @GetMapping("/user-roles/roles/{roleId}")
+    public List<RoleUserResponseDTO> findByRoleId(@PathVariable Long roleId) {
+        return userRoleService.findByRoleId(roleId);
+    }
+
+    @DeleteMapping("/user-roles/{userId}/{roleId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long userId, @PathVariable Long roleId) {
+        userRoleService.delete(userId, roleId);
+    }
+}

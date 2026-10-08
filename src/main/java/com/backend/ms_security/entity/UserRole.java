@@ -1,8 +1,5 @@
 package com.backend.ms_security.entity;
 
-import java.time.ZonedDateTime;
-
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,30 +8,34 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "sessions")
+@Table(
+        name = "user_roles",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_user_role",
+                        columnNames = {"user_id", "role_id"}
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
-public class Session {
+public class UserRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
-
-    @Column(nullable = false)
-    private ZonedDateTime expiration;
-
-    @Column(name = "code_2fa", nullable = false, length = 50)
-    private String code2FA;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 }
