@@ -21,33 +21,33 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/user-roles")
 @RequiredArgsConstructor
 public class UserRoleController {
     private final UserRoleService userRoleService;
 
-    @PostMapping("/user-roles")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserRoleResponseDTO assign(@Valid @RequestBody AssignRoleDTO dto) {
         return userRoleService.assign(dto);
     }
 
-    @GetMapping("/user-roles")
+    @GetMapping
     public List<UserRoleResponseDTO> findAll() {
         return userRoleService.findAll();
     }
 
-    @GetMapping("/user-roles/users/{userId}")
+    @GetMapping("/users/{userId}")
     public List<UserRoleResponseDTO> findByUserId(@PathVariable Long userId) {
         return userRoleService.findByUserId(userId);
     }
 
-    @GetMapping("/user-roles/roles/{roleId}")
+    @GetMapping("/roles/{roleId}")
     public List<RoleUserResponseDTO> findByRoleId(@PathVariable Long roleId) {
         return userRoleService.findByRoleId(roleId);
     }
 
-    @DeleteMapping("/user-roles/{userId}/{roleId}")
+    @DeleteMapping("/{userId}/{roleId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long userId, @PathVariable Long roleId) {
         userRoleService.delete(userId, roleId);
