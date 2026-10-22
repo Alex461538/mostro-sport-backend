@@ -7,10 +7,12 @@ import org.springframework.stereotype.Service;
 import com.backend.ms_security.dto.role.CreateRoleDTO;
 import com.backend.ms_security.dto.role.RoleResponseDTO;
 import com.backend.ms_security.dto.role.UpdateRoleDTO;
+import com.backend.ms_security.dto.rolepermission.RolePermissionsResponseDTO;
 import com.backend.ms_security.entity.Role;
 import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
 import com.backend.ms_security.mapper.RoleMapper;
+import com.backend.ms_security.repository.RolePermissionRepository;
 import com.backend.ms_security.repository.RoleRepository;
 import com.backend.ms_security.repository.UserRoleRepository;
 
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class RoleService {
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final RolePermissionRepository rolePermissionRepository;
     private final RoleMapper roleMapper;
 
     public RoleResponseDTO create(CreateRoleDTO dto) {
@@ -52,6 +55,15 @@ public class RoleService {
         return roleMapper.toResponseDTO(findRole(id));
     }
 
+    public RolePermissionsResponseDTO findByIdAndPermissions(Long id) {
+        Role role = roleRepository.findWithPermissionsById(id)
+                .orElseThrow(() -> new ApplicationException(
+                        ErrorCase.NOT_FOUND,
+                        "Role not found with id: " + id
+                ));
+        return roleMapper.toPermissionsResponseDTO(role);
+    }
+
     public RoleResponseDTO update(Long id, UpdateRoleDTO dto) {
         Role role = findRole(id);
 
@@ -70,10 +82,10 @@ public class RoleService {
     public void delete(Long id) {
         Role role = findRole(id);
 
-        if (userRoleRepository.existsByRoleId(id)) {
+        if (userRoleRepository.existsByRoleId(id) || rolePermissionRepository.existsByRoleId(id)) {
             throw new ApplicationException(
                     ErrorCase.INVALID_OPERATION,
-                    "The role cannot be deleted because it is assigned to one or more users."
+                    "The role cannot be deleted because it is assigned to one or more users or permissions."
             );
         }
 

@@ -1,6 +1,7 @@
 package com.backend.ms_security.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +15,12 @@ public class CreateUserDTO extends BaseUserDTO
     )
     @Size(
             min = 8,
-            message = "The password should be at least 8 chars long."
+            max = 72,
+            message = "The password must be between 8 and 72 characters long."
+    )
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])\\S{8,72}$",
+            message = "The password must contain at least one lowercase letter, one uppercase letter, one number, one special character, and no spaces."
     )
     private String password;
 }

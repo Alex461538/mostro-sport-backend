@@ -1,5 +1,8 @@
 package com.backend.ms_security.service;
 
+import java.util.List;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.backend.ms_security.dto.user.CreateUserDTO;
@@ -16,13 +19,12 @@ import com.backend.ms_security.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponseDTO create(CreateUserDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
@@ -31,7 +33,8 @@ public class UserService {
                     "There is already a user with this email."
             );
         }
-        User user = userMapper.toEntity(dto);
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        User user = userMapper.toEntity(dto, encodedPassword);
         User savedUser = userRepository.save(user);
         return userMapper.toResponseDTO(savedUser);
     }
@@ -89,6 +92,11 @@ public class UserService {
             );
         }
         userMapper.updateEntity(dto, user);
+
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+
         User updatedUser = userRepository.save(user);
         return userMapper.toResponseDTO(updatedUser);
     }

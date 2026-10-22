@@ -7,10 +7,20 @@ import org.springframework.stereotype.Component;
 import com.backend.ms_security.dto.role.CreateRoleDTO;
 import com.backend.ms_security.dto.role.RoleResponseDTO;
 import com.backend.ms_security.dto.role.UpdateRoleDTO;
+import com.backend.ms_security.dto.rolepermission.RolePermissionsResponseDTO;
 import com.backend.ms_security.entity.Role;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class RoleMapper {
+    private final RolePermissionMapper rolePermissionMapper;
+
+    public RoleMapper() {
+        this.rolePermissionMapper = new RolePermissionMapper(new PermissionMapper());
+    }
+
     public Role toEntity(CreateRoleDTO dto) {
         Role role = new Role();
         role.setName(dto.getName());
@@ -35,5 +45,14 @@ public class RoleMapper {
         return roles.stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    public RolePermissionsResponseDTO toPermissionsResponseDTO(Role role) {
+        return new RolePermissionsResponseDTO(
+                role.getId(),
+                role.getName(),
+                role.getDescription(),
+                rolePermissionMapper.toResponseDTOList(role.getRolePermissions())
+        );
     }
 }

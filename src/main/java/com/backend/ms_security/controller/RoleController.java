@@ -43,6 +43,11 @@ public class RoleController {
         return roleService.findById(id);
     }
 
+    @GetMapping("/{id}/detail-with-permissions")
+    public com.backend.ms_security.dto.rolepermission.RolePermissionsResponseDTO findByIdAndPermissions(@PathVariable Long id) {
+        return roleService.findByIdAndPermissions(id);
+    }
+
     @PutMapping("/{id}")
     public RoleResponseDTO update(@PathVariable Long id, @Valid @RequestBody UpdateRoleDTO dto) {
         return roleService.update(id, dto);
