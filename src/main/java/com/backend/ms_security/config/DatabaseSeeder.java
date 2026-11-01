@@ -35,21 +35,25 @@ public class DatabaseSeeder {
             User adminUser = findOrCreateAdminUser();
             assignRole(adminUser, adminRole);
 
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/roles"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users/"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/"));
+            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles/"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/roles/"));
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles/{id}"));
             assignPermission(adminRole, findOrCreatePermission("PUT", "/api/roles/{id}"));
             assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/permissions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/permissions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles/roles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/user-roles"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/user-roles/{id}/{id}"));
+            assignPermission(adminRole, findOrCreatePermission( "GET", "/api/user-roles/users/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions/"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/permissions/"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions/{id}/"));
+            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/permissions/{id}/"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/permissions/{id}/"));
         };
     }
 
