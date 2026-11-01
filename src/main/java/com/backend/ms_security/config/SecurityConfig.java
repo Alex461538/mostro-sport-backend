@@ -8,6 +8,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.authorization.DynamicAuthorizationManager;
 
@@ -24,12 +25,22 @@ public class SecurityConfig {
     }
 
     @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/oauth/google",
+                                "/api/auth/oauth/microsoft",
+                                "/api/auth/oauth/github"
+                        ).permitAll()
                         .anyRequest().access(dynamicAuthorizationManager)
                 )
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
