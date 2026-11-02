@@ -25,12 +25,49 @@ import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.entity.User;
+import com.backend.ms_security.repository.SessionRepository;
 import com.backend.ms_security.repository.UserRepository;
 import com.backend.ms_security.service.GitHubOAuthService;
 import com.backend.ms_security.service.GoogleOAuthService;
 import com.backend.ms_security.service.JwtService;
 
 class GoogleOAuthLoginTest {
+
+    @Test
+    void shouldCreateSessionRecordWhenJwtIsGenerated() {
+        UserRepository userRepository = mock(UserRepository.class);
+        SessionRepository sessionRepository = mock(SessionRepository.class);
+        User user = new User();
+        user.setId(77L);
+        user.setEmail("session@example.com");
+        user.setName("Session User");
+        user.setPassword("secret");
+
+        SecretKey secretKey = new SecretKeySpec(
+                Base64.getEncoder().encodeToString("clave-local-educativa-de-32-bytes".getBytes(StandardCharsets.UTF_8))
+                        .getBytes(StandardCharsets.UTF_8),
+                "HmacSHA256"
+        );
+
+        JwtService jwtService = new JwtService(
+                new org.springframework.security.oauth2.jwt.NimbusJwtEncoder(
+                        new com.nimbusds.jose.jwk.source.ImmutableJWKSet<>(
+                                new com.nimbusds.jose.jwk.JWKSet(
+                                        new com.nimbusds.jose.jwk.OctetSequenceKey.Builder(secretKey.getEncoded()).build()
+                                )
+                        )
+                ),
+                sessionRepository
+        );
+
+        when(sessionRepository.save(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponseDTO response = jwtService.generateToken(user);
+
+        assertNotNull(response);
+        assertNotNull(response.accessToken());
+        assertTrue(response.expiresAt().isAfter(Instant.now()));
+    }
 
     @Test
     void shouldCreateInternalJwtWhenGoogleTokenIsValid() {

@@ -89,11 +89,14 @@ public class PermissionService {
         }
 
         String normalizedUrl = normalizeUrl(requestUrl);
+
+        System.out.println(normalizedUrl);
+        System.out.println(permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl).toArray().length);
         return !permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl)
                 .isEmpty();
     }
 
     String normalizeUrl(String requestUrl) {
-        return ID_SEGMENT_PATTERN.matcher(requestUrl).replaceAll("{id}");
+        return ID_SEGMENT_PATTERN.matcher(requestUrl).replaceAll("{id}").replaceAll("\\/+$", "");
     }
 }

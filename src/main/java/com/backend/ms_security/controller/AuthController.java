@@ -1,5 +1,8 @@
 package com.backend.ms_security.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,5 +35,11 @@ public class AuthController {
     @PostMapping("/oauth/github")
     public AuthResponseDTO loginWithGitHub(@Valid @RequestBody OAuthRequestDTO dto) {
         return authService.loginWithGitHub(dto.credential());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
+        authService.logout(jwt.getTokenValue());
+        return ResponseEntity.noContent().build();
     }
 }

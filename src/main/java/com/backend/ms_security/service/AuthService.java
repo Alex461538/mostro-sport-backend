@@ -8,6 +8,7 @@ import com.backend.ms_security.dto.auth.LoginRequestDTO;
 import com.backend.ms_security.entity.User;
 import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
+import com.backend.ms_security.repository.SessionRepository;
 import com.backend.ms_security.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final SessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleOAuthAuthenticator googleOAuthAuthenticator;
@@ -39,6 +41,20 @@ public class AuthService {
 
     public AuthResponseDTO loginWithGitHub(String code) {
         return gitHubOAuthAuthenticator.authenticate(code);
+    }
+
+    public void logout(String token) {
+        String normalizedToken = token == null ? "" : token.trim();
+        if (normalizedToken.startsWith("Bearer ")) {
+            normalizedToken = normalizedToken.substring("Bearer ".length()).trim();
+        }
+
+        if (normalizedToken.isBlank()) {
+            return;
+        }
+
+        sessionRepository.findByToken(normalizedToken)
+                .ifPresent(sessionRepository::delete);
     }
 
     private ApplicationException unauthorized() {
