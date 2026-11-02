@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,12 +17,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
+import com.backend.ms_security.dto.auth.ForgotPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
+import com.backend.ms_security.dto.auth.ResetPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
+import com.backend.ms_security.entity.PasswordResetToken;
 import com.backend.ms_security.entity.Session;
 import com.backend.ms_security.entity.User;
 import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
+import com.backend.ms_security.repository.PasswordResetTokenRepository;
 import com.backend.ms_security.repository.SessionRepository;
 import com.backend.ms_security.repository.UserRepository;
 
@@ -31,9 +37,12 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
     private static final int TWO_FA_CODE_LENGTH = 6;
     private static final int TWO_FA_TTL_MINUTES = 3;
+    private static final int RESET_TOKEN_TTL_MINUTES = 15;
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[\\S]{8,72}$");
 
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleOAuthService googleOAuthService;
@@ -78,6 +87,63 @@ public class AuthService {
 
         sessionRepository.delete(session);
         return jwtService.generateToken(user);
+    }
+
+    public void forgotPassword(ForgotPasswordRequestDTO dto) {
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        if (email.isBlank()) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION, "The email is mandatory.");
+        }
+
+        userRepository.findByEmail(email).ifPresent(user -> {
+            passwordResetTokenRepository.findTopByUserIdAndUsedFalseOrderByExpirationDesc(user.getId())
+                    .ifPresent(passwordResetTokenRepository::delete);
+
+            String token = UUID.randomUUID().toString();
+            ZonedDateTime expiration = ZonedDateTime.now().plusMinutes(RESET_TOKEN_TTL_MINUTES);
+
+            PasswordResetToken resetToken = new PasswordResetToken();
+            resetToken.setToken(token);
+            resetToken.setExpiration(expiration);
+            resetToken.setUsed(false);
+            resetToken.setUser(user);
+            passwordResetTokenRepository.save(resetToken);
+
+            sendRecoveryEmail(user.getEmail(), token);
+        });
+    }
+
+    public void resetPassword(ResetPasswordRequestDTO dto) {
+        String token = dto.getToken() == null ? "" : dto.getToken().trim();
+        String newPassword = dto.getNewPassword() == null ? "" : dto.getNewPassword();
+
+        if (token.isBlank()) {
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED, "Invalid or expired reset token.");
+        }
+
+        if (!isPasswordValid(newPassword)) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION, "The password must contain uppercase, lowercase, number, special character, and be between 8 and 72 characters.");
+        }
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ApplicationException(ErrorCase.UNAUTHORIZED, "Invalid or expired reset token."));
+
+        if (resetToken.isUsed()) {
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED, "This reset token has already been used.");
+        }
+
+        if (resetToken.getExpiration().isBefore(ZonedDateTime.now())) {
+            resetToken.setUsed(true);
+            passwordResetTokenRepository.save(resetToken);
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED, "Reset token expired.");
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
     }
 
     public AuthResponseDTO loginWithGoogle(String credential) {
@@ -150,6 +216,35 @@ public class AuthService {
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
         restTemplate.postForEntity("http://localhost:5000/send-email", request, Map.class);
+    }
+
+    private void sendRecoveryEmail(String to, String token) {
+        if (restTemplate == null) {
+            return;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String message = "Hola,\n\n"
+                + "Has solicitado recuperar tu contraseña.\n"
+                + "Usa este token para continuar:\n\n"
+                + token + "\n\n"
+                + "Este token será válido durante 15 minutos.\n"
+                + "Si no solicitaste este cambio, puedes ignorar este correo.";
+
+        Map<String, String> payload = Map.of(
+                "to", to,
+                "subject", "Recuperación de contraseña",
+                "message", message
+        );
+
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
+        restTemplate.postForEntity("http://localhost:5000/send-email", request, Map.class);
+    }
+
+    private boolean isPasswordValid(String password) {
+        return password != null && PASSWORD_PATTERN.matcher(password).matches();
     }
 
     private ApplicationException unauthorized() {

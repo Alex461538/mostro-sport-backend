@@ -58,6 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/login/verify-2fa",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 "/api/auth/oauth/google",
                                 "/api/auth/oauth/microsoft",
                                 "/api/auth/oauth/github"
