@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.dto.auth.OAuthRequestDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
+import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
 import com.backend.ms_security.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -25,6 +26,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO dto) {
         return authService.login(dto);
+    }
+
+    @PostMapping("/login/verify-2fa")
+    public AuthResponseDTO verify2fa(@Valid @RequestBody VerifyTwoFactorRequestDTO dto) {
+        return authService.verify2fa(dto);
     }
 
     @PostMapping("/oauth/google")
