@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
@@ -39,6 +40,9 @@ public class AuthService {
     private final GoogleOAuthService googleOAuthService;
     private final GitHubOAuthService gitHubOAuthService;
     private final RestTemplate restTemplate;
+
+    @Value("${notification.service.url}")
+    private String notificationServiceUrl;
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
@@ -149,7 +153,7 @@ public class AuthService {
         );
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
-        restTemplate.postForEntity("http://localhost:5000/send-email", request, Map.class);
+        restTemplate.postForEntity(notificationServiceUrl, request, Map.class);
     }
 
     private ApplicationException unauthorized() {

@@ -3,6 +3,8 @@ package com.backend.ms_security.exception;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<Map<String, String>> handleApplicationException(ApplicationException exception) {
@@ -52,6 +55,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleUnexpectedException(Exception exception) {
+        log.error("Unhandled exception while processing request", exception);
         Map<String, String> error = new LinkedHashMap<>();
         error.put("errorCase", "INTERNAL_ERROR");
         error.put("message", "An internal server error occurred");
