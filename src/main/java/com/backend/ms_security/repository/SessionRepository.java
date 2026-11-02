@@ -14,6 +14,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 
     Optional<Session> findByToken(String token);
 
+    Optional<Session> findByUserIdAndToken(Long userId, String token);
+
+    Optional<Session> findTopByUserIdAndCode2FAIsNotNullOrderByExpirationDesc(Long userId);
+
     boolean existsByToken(String token);
 
     boolean existsByTokenAndIdNot(String token, Long id);

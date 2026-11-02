@@ -5,6 +5,11 @@ import java.time.Instant;
 public record AuthResponseDTO(
         String accessToken,
         String tokenType,
-        Instant expiresAt
+        Instant expiresAt,
+        Boolean requiresTwoFactor,
+        String challengeToken
 ) {
+    public AuthResponseDTO(String accessToken, String tokenType, Instant expiresAt) {
+        this(accessToken, tokenType, expiresAt, false, null);
+    }
 }
