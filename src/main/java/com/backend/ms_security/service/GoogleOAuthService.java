@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,17 +18,13 @@ import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
 import com.backend.ms_security.repository.UserRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 @Service
-public class GoogleOAuthService {
+public class GoogleOAuthService implements GoogleOAuthAuthenticator {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
-
-    @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID}}")
-    private String clientId;
+    private final String clientId;
 
     private Boolean coerceBoolean(Object value) {
         if (value instanceof Boolean bool) {
@@ -44,7 +41,16 @@ public class GoogleOAuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService
     ) {
-        this(userRepository, passwordEncoder, jwtService, new RestTemplate());
+        this(userRepository, passwordEncoder, jwtService, new RestTemplate(), "");
+    }
+
+    public GoogleOAuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RestTemplate restTemplate
+    ) {
+        this(userRepository, passwordEncoder, jwtService, restTemplate, "");
     }
 
     @Autowired
@@ -52,12 +58,19 @@ public class GoogleOAuthService {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RestTemplate restTemplate
+            RestTemplate restTemplate,
+            @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID:}}") String clientId
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.clientId = clientId;
+    }
+
+    @Override
+    public AuthResponseDTO authenticate(String credential) {
+        return loginWithGoogleToken(credential);
     }
 
     public GoogleTokenInfo verifyToken(String credential) {
