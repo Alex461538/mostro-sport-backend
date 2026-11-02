@@ -1,5 +1,6 @@
 HELP.md
 ### Credentials ###
+src/main/resources/
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -32,4 +33,3 @@ build/
 
 ### VS Code ###
 .vscode/
-src/main/resources/application.properties
