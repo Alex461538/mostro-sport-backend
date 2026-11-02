@@ -31,7 +31,7 @@ public class Session {
     @Column(nullable = false)
     private ZonedDateTime expiration;
 
-    @JoinColumn(name = "code2fa", nullable = true)
+    @Column(name = "code_2fa", nullable = false)
     private String code2FA;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

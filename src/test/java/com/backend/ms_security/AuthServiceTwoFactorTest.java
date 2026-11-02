@@ -1,8 +1,11 @@
 package com.backend.ms_security;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,7 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
@@ -47,6 +55,9 @@ class AuthServiceTwoFactorTest {
     @Mock
     private GitHubOAuthService gitHubOAuthService;
 
+    @Mock
+    private RestTemplate restTemplate;
+
     @InjectMocks
     private AuthService authService;
 
@@ -70,5 +81,33 @@ class AuthServiceTwoFactorTest {
         assertNotNull(response.challengeToken());
         assertNotNull(response.expiresAt());
         verify(jwtService, never()).generateToken(any(User.class));
+    }
+
+    @Test
+    void loginShouldDeleteChallengeAndReturnServiceUnavailableWhenEmailServiceIsDown() {
+        User user = new User();
+        user.setId(7L);
+        user.setEmail("alice@example.com");
+        user.setPassword("hashed-password");
+
+        LoginRequestDTO dto = new LoginRequestDTO();
+        dto.setEmail("alice@example.com");
+        dto.setPassword("Secret123!");
+
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Secret123!", "hashed-password")).thenReturn(true);
+        when(restTemplate.postForEntity(
+                eq("http://localhost:5000/send-email"),
+                any(HttpEntity.class),
+                eq(java.util.Map.class)
+        )).thenThrow(new ResourceAccessException("Connection refused"));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.login(dto)
+        );
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
+        verify(sessionRepository).delete(any(com.backend.ms_security.entity.Session.class));
     }
 }

@@ -7,12 +7,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
@@ -39,6 +43,9 @@ public class AuthService {
     private final GoogleOAuthService googleOAuthService;
     private final GitHubOAuthService gitHubOAuthService;
     private final RestTemplate restTemplate;
+
+    @Value("${auth.email-service.url:http://localhost:5000/send-email}")
+    private String emailServiceUrl = "http://localhost:5000/send-email";
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
@@ -119,7 +126,16 @@ public class AuthService {
         challenge.setExpiration(ZonedDateTime.ofInstant(expiresAt, ZoneId.systemDefault()));
         sessionRepository.save(challenge);
 
-        sendTwoFactorCodeEmail(user.getEmail(), code);
+        try {
+            sendTwoFactorCodeEmail(user.getEmail(), code);
+        } catch (RestClientException exception) {
+            sessionRepository.delete(challenge);
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "The two-factor email service is unavailable.",
+                    exception
+            );
+        }
 
         return new AuthResponseDTO(challengeToken, "Bearer", expiresAt, true, challengeToken);
     }
@@ -131,10 +147,6 @@ public class AuthService {
     }
 
     private void sendTwoFactorCodeEmail(String to, String code) {
-        if (restTemplate == null) {
-            return;
-        }
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -149,7 +161,7 @@ public class AuthService {
         );
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
-        restTemplate.postForEntity("http://localhost:5000/send-email", request, Map.class);
+        restTemplate.postForEntity(emailServiceUrl, request, Map.class);
     }
 
     private ApplicationException unauthorized() {
