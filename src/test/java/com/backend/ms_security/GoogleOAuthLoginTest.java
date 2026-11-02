@@ -57,7 +57,27 @@ class GoogleOAuthLoginTest {
                 )
         ));
 
-        GoogleOAuthService service = new GoogleOAuthService(userRepository, new BCryptPasswordEncoder(12), jwtService);
+        RestTemplate googleRestTemplate = mock(RestTemplate.class);
+        when(googleRestTemplate.getForObject(
+                ArgumentMatchers.startsWith("https://oauth2.googleapis.com/tokeninfo?id_token=valid-token"),
+                ArgumentMatchers.eq(Map.class)
+        )).thenReturn(Map.of(
+                "iss", "https://accounts.google.com",
+                "aud", "google-client-id",
+                "email", "ana@gmail.com",
+                "email_verified", true,
+                "name", "Ana",
+                "picture", "https://example.com/ana.png",
+                "sub", "google-user-id"
+        ));
+
+        GoogleOAuthService service = new GoogleOAuthService(
+                userRepository,
+                new BCryptPasswordEncoder(12),
+                jwtService,
+                googleRestTemplate,
+                "google-client-id"
+        );
 
         AuthResponseDTO response = service.loginWithGoogleToken("valid-token");
 

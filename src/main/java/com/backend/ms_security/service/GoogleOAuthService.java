@@ -17,18 +17,25 @@ import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
 import com.backend.ms_security.repository.UserRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
-public class GoogleOAuthService {
+public class GoogleOAuthService implements GoogleOAuthAuthenticator {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    private final String clientId;
 
-    @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID}}")
-    private String clientId;
+    public GoogleOAuthService(UserRepository userRepository,
+                              PasswordEncoder passwordEncoder,
+                              JwtService jwtService,
+                              RestTemplate restTemplate,
+                              @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID:}}") String clientId) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.restTemplate = restTemplate;
+        this.clientId = clientId;
+    }
 
     private Boolean coerceBoolean(Object value) {
         if (value instanceof Boolean bool) {
@@ -41,6 +48,10 @@ public class GoogleOAuthService {
     }
 
     public GoogleTokenInfo verifyToken(String credential) {
+        if (clientId == null || clientId.isBlank()) {
+            throw unauthorized();
+        }
+
         String token = credential == null ? "" : credential.trim();
         if (token.isBlank()) {
             throw unauthorized();
@@ -81,13 +92,18 @@ public class GoogleOAuthService {
         return new GoogleTokenInfo(issuer, audience, email, emailVerified, name, picture, subject);
     }
 
-    public AuthResponseDTO loginWithGoogleToken(String credential) {
+    @Override
+    public AuthResponseDTO authenticate(String credential) {
         GoogleTokenInfo tokenInfo = verifyToken(credential);
 
         User user = userRepository.findByEmail(tokenInfo.email())
                 .orElseGet(() -> createUserFromGoogle(tokenInfo));
 
         return jwtService.generateToken(user);
+    }
+
+    public AuthResponseDTO loginWithGoogleToken(String credential) {
+        return authenticate(credential);
     }
 
     private User createUserFromGoogle(GoogleTokenInfo tokenInfo) {

@@ -18,8 +18,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final GoogleOAuthService googleOAuthService;
-    private final GitHubOAuthService gitHubOAuthService;
+    private final GoogleOAuthAuthenticator googleOAuthAuthenticator;
+    private final GitHubOAuthAuthenticator gitHubOAuthAuthenticator;
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
@@ -34,12 +34,11 @@ public class AuthService {
     }
 
     public AuthResponseDTO loginWithGoogle(String credential) {
-        return googleOAuthService.loginWithGoogleToken(credential);
+        return googleOAuthAuthenticator.authenticate(credential);
     }
 
     public AuthResponseDTO loginWithGitHub(String code) {
-        String accessToken = gitHubOAuthService.exchangeCodeForAccessToken(code);
-        return gitHubOAuthService.loginWithGitHubToken(accessToken);
+        return gitHubOAuthAuthenticator.authenticate(code);
     }
 
     private ApplicationException unauthorized() {

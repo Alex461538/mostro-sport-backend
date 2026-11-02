@@ -27,16 +27,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 
 @Service
-public class GitHubOAuthService {
+public class GitHubOAuthService implements GitHubOAuthAuthenticator {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
 
-    @Value("${github.oauth.client-id}")
+    @Value("${github.oauth.client-id:${GITHUB_CLIENT_ID:}}")
     private String githubClientId;
 
-    @Value("${github.oauth.client-secret}")
+    @Value("${github.oauth.client-secret:${GITHUB_CLIENT_SECRET:}}")
     private String githubClientSecret;
 
     public GitHubOAuthService(UserRepository userRepository,
@@ -50,6 +50,11 @@ public class GitHubOAuthService {
     }
 
     public String exchangeCodeForAccessToken(String code) {
+        if (githubClientId == null || githubClientId.isBlank()
+                || githubClientSecret == null || githubClientSecret.isBlank()) {
+            throw unauthorized();
+        }
+
         String oneTimeCode = code == null ? "" : code.trim();
         if (oneTimeCode.isBlank()) {
             throw unauthorized();
@@ -86,6 +91,12 @@ public class GitHubOAuthService {
         } catch (RestClientException ex) {
             throw unauthorized();
         }
+    }
+
+    @Override
+    public AuthResponseDTO authenticate(String authorizationCode) {
+        String accessToken = exchangeCodeForAccessToken(authorizationCode);
+        return loginWithGitHubToken(accessToken);
     }
 
     public AuthResponseDTO loginWithGitHubToken(String credential) {
