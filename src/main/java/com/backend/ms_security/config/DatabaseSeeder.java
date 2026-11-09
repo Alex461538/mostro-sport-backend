@@ -38,6 +38,7 @@ public class DatabaseSeeder {
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/users"));
             assignPermission(adminRole, findOrCreatePermission("POST", "/api/users"));
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/detail-with-roles"));
             assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}"));
             assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}"));
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles"));
@@ -50,6 +51,15 @@ public class DatabaseSeeder {
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions/{id}"));
             assignPermission(adminRole, findOrCreatePermission("PUT", "/api/permissions/{id}"));
             assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/permissions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission( "GET", "/api/profiles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission( "POST", "/api/profiles"));
+            assignPermission(adminRole, findOrCreatePermission( "GET", "/api/profiles"));
+            assignPermission(adminRole, findOrCreatePermission( "PUT", "/api/profiles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission( "DELETE", "/api/profiles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users/{id}/profile"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/profile"));
+            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/profile"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/profile"));
         };
     }
 
