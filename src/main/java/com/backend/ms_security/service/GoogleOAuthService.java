@@ -25,6 +25,7 @@ public class GoogleOAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final GuestRoleService guestRoleService;
 
     @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID}}")
     private String clientId;
@@ -44,7 +45,16 @@ public class GoogleOAuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService
     ) {
-        this(userRepository, passwordEncoder, jwtService, new RestTemplate());
+        this(userRepository, passwordEncoder, jwtService, new RestTemplate(), null);
+    }
+
+    public GoogleOAuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RestTemplate restTemplate
+    ) {
+        this(userRepository, passwordEncoder, jwtService, restTemplate, null);
     }
 
     @Autowired
@@ -52,12 +62,14 @@ public class GoogleOAuthService {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RestTemplate restTemplate
+            RestTemplate restTemplate,
+            GuestRoleService guestRoleService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.guestRoleService = guestRoleService;
     }
 
     public GoogleTokenInfo verifyToken(String credential) {
@@ -118,6 +130,10 @@ public class GoogleOAuthService {
 
         User user = userRepository.findByEmail(tokenInfo.email())
                 .orElseGet(() -> createUserFromGoogle(tokenInfo));
+
+        if (guestRoleService != null) {
+            guestRoleService.assignGuestRole(user);
+        }
 
         return jwtService.generateToken(user);
     }

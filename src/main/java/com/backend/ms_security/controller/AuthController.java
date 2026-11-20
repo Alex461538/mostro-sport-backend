@@ -16,6 +16,8 @@ import com.backend.ms_security.dto.auth.LoginRequestDTO;
 import com.backend.ms_security.dto.auth.OAuthRequestDTO;
 import com.backend.ms_security.dto.auth.ResetPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
+import com.backend.ms_security.dto.user.CreateUserDTO;
+import com.backend.ms_security.dto.user.UserResponseDTO;
 import com.backend.ms_security.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -63,5 +65,10 @@ public class AuthController {
     public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
         authService.logout(jwt.getTokenValue());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/register")
+    public UserResponseDTO register(@Valid @RequestBody CreateUserDTO dto) {
+        return authService.register(dto);
     }
 }

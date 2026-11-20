@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +33,7 @@ public class GitHubOAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final GuestRoleService guestRoleService;
 
     @Value("${github.oauth.client-id}")
     private String githubClientId;
@@ -43,10 +45,20 @@ public class GitHubOAuthService {
                              PasswordEncoder passwordEncoder,
                              JwtService jwtService,
                              RestTemplate restTemplate) {
+        this(userRepository, passwordEncoder, jwtService, restTemplate, null);
+    }
+
+    @Autowired
+    public GitHubOAuthService(UserRepository userRepository,
+                             PasswordEncoder passwordEncoder,
+                             JwtService jwtService,
+                             RestTemplate restTemplate,
+                             GuestRoleService guestRoleService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.guestRoleService = guestRoleService;
     }
 
     public String exchangeCodeForAccessToken(String code) {
@@ -92,6 +104,10 @@ public class GitHubOAuthService {
         OAuthUserInfo userInfo = verifyGitHubToken(credential);
         User user = userRepository.findByEmail(userInfo.email())
                 .orElseGet(() -> createUserFromGitHub(userInfo));
+
+        if (guestRoleService != null) {
+            guestRoleService.assignGuestRole(user);
+        }
 
         return jwtService.generateToken(user);
     }
@@ -178,7 +194,11 @@ public class GitHubOAuthService {
         user.setEmail(userInfo.email());
         user.setName(userInfo.name() == null || userInfo.name().isBlank() ? "GitHub User" : userInfo.name());
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-        return userRepository.save(user);
+        user = userRepository.save(user);
+
+        guestRoleService.assignGuestRole(user);
+
+        return user;
     }
 
     private ApplicationException unauthorized() {

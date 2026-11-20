@@ -21,6 +21,8 @@ import com.backend.ms_security.dto.auth.ForgotPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
 import com.backend.ms_security.dto.auth.ResetPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
+import com.backend.ms_security.dto.user.CreateUserDTO;
+import com.backend.ms_security.dto.user.UserResponseDTO;
 import com.backend.ms_security.entity.PasswordResetToken;
 import com.backend.ms_security.entity.Session;
 import com.backend.ms_security.entity.User;
@@ -48,6 +50,7 @@ public class AuthService {
     private final GoogleOAuthService googleOAuthService;
     private final GitHubOAuthService gitHubOAuthService;
     private final RestTemplate restTemplate;
+    private final GuestRoleService guestRoleService;
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
@@ -167,6 +170,33 @@ public class AuthService {
 
         sessionRepository.findByToken(normalizedToken)
                 .ifPresent(sessionRepository::delete);
+    }
+
+    public UserResponseDTO register(CreateUserDTO dto) {
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        String name = dto.getName() == null ? "" : dto.getName().trim();
+
+        if (name.isBlank()) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION, "The name is mandatory.");
+        }
+        if (email.isBlank()) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION, "The email is mandatory.");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new ApplicationException(ErrorCase.ALREADY_EXISTS, "There is already a user with this email.");
+        }
+        if (!isPasswordValid(dto.getPassword())) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION, "The password must contain uppercase, lowercase, number, special character, and be between 8 and 72 characters.");
+        }
+
+        User user = new User();
+        user.setName(name);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        User savedUser = userRepository.save(user);
+        guestRoleService.assignGuestRole(savedUser);
+
+        return new UserResponseDTO(savedUser.getId(), savedUser.getName(), savedUser.getEmail());
     }
 
     private AuthResponseDTO createTwoFactorChallenge(User user) {
