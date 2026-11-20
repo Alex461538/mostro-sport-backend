@@ -36,6 +36,7 @@ public class DatabaseSeeder {
             User adminUser = findOrCreateAdminUser();
             assignRole(adminUser, adminRole);
 
+            seedAuthPermissions(adminRole);
             seedUserPermissions(adminRole);
             seedRolePermissions(adminRole);
             seedPermissionCatalogPermissions(adminRole);
@@ -183,5 +184,17 @@ public class DatabaseSeeder {
         assignPermission(role, findOrCreatePermission("GET", "/api/role-permissions/roles/{id}", "Role Permissions"));
         assignPermission(role, findOrCreatePermission("GET", "/api/role-permissions/permissions/{id}", "Role Permissions"));
         assignPermission(role, findOrCreatePermission("DELETE", "/api/role-permissions/{id}/{id}", "Role Permissions"));
+    }
+
+    private void seedAuthPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/login", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/login/verify-2fa", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/forgot-password", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/reset-password", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/oauth/google", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/oauth/github", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/logout", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/register", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/internal/security/permissions-validation", "Security"));
     }
 }
