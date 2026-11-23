@@ -25,7 +25,10 @@ public class PermissionValidationController {
             JwtAuthenticationToken authentication) {
 
         Long userId = Long.valueOf(authentication.getToken().getSubject());
-        boolean allowed = permissionService.hasPermission(userId, dto.getMethod(), dto.getUrl());
+        String method = dto.getMethod();
+        String url = dto.getUrl();
+
+        boolean allowed = permissionService.hasPermission(userId, method, url);
         return new PermissionValidationResponseDTO(allowed);
     }
 }

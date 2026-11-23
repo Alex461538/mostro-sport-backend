@@ -1,5 +1,6 @@
 HELP.md
 ### Credentials ###
+.env
 src/main/resources/
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -35,3 +36,4 @@ build/
 .vscode/
 
 /context
+run.sh
