@@ -1,6 +1,5 @@
 package com.backend.ms_security.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,69 +28,22 @@ public class DatabaseSeeder {
     private final RolePermissionRepository rolePermissionRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${security.seed.admin-email:admin@uc.edu.co}")
-    private String adminEmail;
-
-    @Value("${security.seed.admin-password:}")
-    private String adminPassword;
-
     @Bean
     CommandLineRunner seedDatabase() {
         return args -> {
             Role adminRole = findOrCreateRole("ADMIN", "Administrador del sistema");
+            findOrCreateRole("GUEST", "Usuario invitado registrado en la plataforma");
             User adminUser = findOrCreateAdminUser();
-            if (adminUser != null) {
-                assignRole(adminUser, adminRole);
-            }
+            assignRole(adminUser, adminRole);
 
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/detail-with-roles"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/roles"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/permissions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission( "GET", "/api/profiles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission( "POST", "/api/profiles"));
-            assignPermission(adminRole, findOrCreatePermission( "GET", "/api/profiles"));
-            assignPermission(adminRole, findOrCreatePermission( "PUT", "/api/profiles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission( "DELETE", "/api/profiles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users/{id}/profile"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/profile"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/profile"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/profile"));
-
-            // Administracion de asignaciones y sesiones (panel del front)
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/detail-with-sessions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/user-roles"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles/users/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/user-roles/{id}/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/role-permissions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions/roles/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions/permissions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/role-permissions/{id}/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/sessions"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/sessions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/sessions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/sessions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/sessions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/sessions"));
-            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users/{id}/sessions"));
-            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/sessions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/sessions/{id}"));
-            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/sessions/{id}"));
+            seedAuthPermissions(adminRole);
+            seedUserPermissions(adminRole);
+            seedRolePermissions(adminRole);
+            seedPermissionCatalogPermissions(adminRole);
+            seedProfilePermissions(adminRole);
+            seedSessionPermissions(adminRole);
+            seedUserRolePermissions(adminRole);
+            seedRolePermissionPermissions(adminRole);
         };
     }
 
@@ -105,30 +57,47 @@ public class DatabaseSeeder {
                 });
     }
 
-    // Si no hay contrasena semilla configurada, no se crea el admin por defecto.
     private User findOrCreateAdminUser() {
-        return userRepository.findByEmail(adminEmail)
+        return userRepository.findByEmail("admin@uc.edu.co")
                 .orElseGet(() -> {
-                    if (adminPassword == null || adminPassword.isBlank()) {
-                        return null;
-                    }
                     User user = new User();
                     user.setName("Administrador");
-                    user.setEmail(adminEmail);
-                    user.setPassword(passwordEncoder.encode(adminPassword));
+                    user.setEmail("admin@uc.edu.co");
+                    user.setPassword(passwordEncoder.encode("Admin123!"));
                     return userRepository.save(user);
                 });
     }
 
-    private Permission findOrCreatePermission(String method, String url) {
-        return permissionRepository.findByUrlAndMethod(url, method)
-                .orElseGet(() -> {
-                    Permission permission = new Permission();
-                    permission.setUrl(url);
-                    permission.setMethod(method);
-                    permission.setModel("core");
-                    return permissionRepository.save(permission);
-                });
+    private Permission findOrCreatePermission(String method, String url, String model) {
+        String normalizedUrl = normalizeIdPlaceholders(url);
+
+        Permission permission = permissionRepository.findByUrlAndMethod(normalizedUrl, method)
+                .orElseGet(() -> permissionRepository.findAll().stream()
+                        .filter(existing -> method.equals(existing.getMethod()))
+                        .filter(existing -> normalizedUrl.equals(normalizeIdPlaceholders(existing.getUrl())))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            Permission newPermission = new Permission();
+                            newPermission.setUrl(normalizedUrl);
+                            newPermission.setMethod(method);
+                            newPermission.setModel(model);
+                            return permissionRepository.save(newPermission);
+                        }));
+
+        boolean changed = !normalizedUrl.equals(permission.getUrl()) || !model.equals(permission.getModel());
+        if (changed) {
+            permission.setUrl(normalizedUrl);
+            permission.setModel(model);
+            return permissionRepository.save(permission);
+        }
+        return permission;
+    }
+
+    private String normalizeIdPlaceholders(String url) {
+        if (url == null) {
+            return "";
+        }
+        return url.replaceAll("(?i)\\{[a-z]*id\\}", "{id}");
     }
 
     private void assignRole(User user, Role role) {
@@ -147,5 +116,85 @@ public class DatabaseSeeder {
             rolePermission.setPermission(permission);
             rolePermissionRepository.save(rolePermission);
         }
+    }
+
+    private void seedUserPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/users", "Users"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users", "Users"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}", "Users"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}/detail-with-sessions", "Users"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}/detail-with-roles", "Users"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/users/{id}", "Users"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/users/{id}", "Users"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/users/{id}/profile", "Profiles"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/users/{id}/profile", "Profiles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}/profile", "Profiles"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/users/{id}/profile", "Profiles"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/users/{id}/sessions", "User Sessions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}/sessions", "User Sessions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/users/{id}/sessions/{id}", "User Sessions"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/users/{id}/sessions/{id}", "User Sessions"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/users/{id}/sessions/{id}", "User Sessions"));
+    }
+
+    private void seedRolePermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/roles", "Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/roles", "Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/roles/{id}", "Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/roles/{id}/detail-with-permissions", "Roles"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/roles/{id}", "Roles"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/roles/{id}", "Roles"));
+    }
+
+    private void seedPermissionCatalogPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/permissions", "Permissions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/permissions", "Permissions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/permissions/{id}", "Permissions"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/permissions/{id}", "Permissions"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/permissions/{id}", "Permissions"));
+    }
+
+    private void seedProfilePermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/profiles", "Profiles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/profiles", "Profiles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/profiles/{id}", "Profiles"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/profiles/{id}", "Profiles"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/profiles/{id}", "Profiles"));
+    }
+
+    private void seedSessionPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/sessions", "Sessions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/sessions", "Sessions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/sessions/{id}", "Sessions"));
+        assignPermission(role, findOrCreatePermission("PUT", "/api/sessions/{id}", "Sessions"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/sessions/{id}", "Sessions"));
+    }
+
+    private void seedUserRolePermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/user-roles", "User Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/user-roles", "User Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/user-roles/users/{id}", "User Roles"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/user-roles/roles/{id}", "User Roles"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/user-roles/{id}/{id}", "User Roles"));
+    }
+
+    private void seedRolePermissionPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/role-permissions", "Role Permissions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/role-permissions", "Role Permissions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/role-permissions/roles/{id}", "Role Permissions"));
+        assignPermission(role, findOrCreatePermission("GET", "/api/role-permissions/permissions/{id}", "Role Permissions"));
+        assignPermission(role, findOrCreatePermission("DELETE", "/api/role-permissions/{id}/{id}", "Role Permissions"));
+    }
+
+    private void seedAuthPermissions(Role role) {
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/login", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/login/verify-2fa", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/forgot-password", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/reset-password", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/oauth/google", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/oauth/github", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/logout", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/auth/register", "Auth"));
+        assignPermission(role, findOrCreatePermission("POST", "/api/internal/security/permissions-validation", "Security"));
     }
 }

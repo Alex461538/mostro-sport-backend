@@ -1,4 +1,4 @@
-package com.backend.ms_security.dto;
+package com.backend.ms_security.dto.permission;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -10,15 +10,15 @@ import lombok.Setter;
 @Setter
 public class PermissionValidationRequestDTO {
 
-    @NotBlank(message = "La url es obligatoria")
-    @Size(max = 255, message = "La url no puede superar 255 caracteres")
+    @NotBlank(message = "La URL es obligatoria.")
+    @Size(max = 255, message = "La URL no puede superar 255 caracteres.")
     private String url;
 
-    @NotBlank(message = "El método es obligatorio")
+    @NotBlank(message = "El método HTTP es obligatorio.")
     @Pattern(
             regexp = "GET|POST|PUT|PATCH|DELETE",
             flags = Pattern.Flag.CASE_INSENSITIVE,
-            message = "El método HTTP no es válido"
+            message = "El método HTTP no es válido."
     )
     private String method;
 }

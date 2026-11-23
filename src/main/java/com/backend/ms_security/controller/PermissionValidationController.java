@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.backend.ms_security.dto.PermissionValidationRequestDTO;
-import com.backend.ms_security.dto.PermissionValidationResponseDTO;
+import com.backend.ms_security.dto.permission.PermissionValidationRequestDTO;
+import com.backend.ms_security.dto.permission.PermissionValidationResponseDTO;
 import com.backend.ms_security.service.PermissionService;
 
 import jakarta.validation.Valid;
@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/internal/security")
 @RequiredArgsConstructor
 public class PermissionValidationController {
-
     private final PermissionService permissionService;
 
     @PostMapping("/permissions-validation")
@@ -26,12 +25,7 @@ public class PermissionValidationController {
             JwtAuthenticationToken authentication) {
 
         Long userId = Long.valueOf(authentication.getToken().getSubject());
-        boolean allowed = permissionService.hasPermission(
-                userId,
-                dto.getMethod(),
-                dto.getUrl()
-        );
-
+        boolean allowed = permissionService.hasPermission(userId, dto.getMethod(), dto.getUrl());
         return new PermissionValidationResponseDTO(allowed);
     }
 }

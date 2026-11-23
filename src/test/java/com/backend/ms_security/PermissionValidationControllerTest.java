@@ -15,8 +15,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import com.backend.ms_security.controller.PermissionValidationController;
-import com.backend.ms_security.dto.PermissionValidationRequestDTO;
-import com.backend.ms_security.dto.PermissionValidationResponseDTO;
+import com.backend.ms_security.dto.permission.PermissionValidationRequestDTO;
+import com.backend.ms_security.dto.permission.PermissionValidationResponseDTO;
 import com.backend.ms_security.service.PermissionService;
 
 import jakarta.validation.Validation;

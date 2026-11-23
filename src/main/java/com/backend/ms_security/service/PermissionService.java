@@ -1,6 +1,7 @@
 package com.backend.ms_security.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
@@ -90,9 +91,7 @@ public class PermissionService {
 
         String normalizedUrl = normalizeUrl(requestUrl);
 
-        System.out.println(normalizedUrl);
-        System.out.println(permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl).toArray().length);
-        return !permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl)
+        return !permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(Locale.ROOT), normalizedUrl)
                 .isEmpty();
     }
 
