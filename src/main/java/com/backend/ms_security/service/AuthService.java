@@ -3,6 +3,7 @@ package com.backend.ms_security.service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -14,12 +15,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.dto.auth.ForgotPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
+import com.backend.ms_security.dto.auth.MeResponseDTO;
+import com.backend.ms_security.dto.auth.RegisterRequestDTO;
 import com.backend.ms_security.dto.auth.ResetPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
 import com.backend.ms_security.entity.PasswordResetToken;
@@ -30,6 +34,7 @@ import com.backend.ms_security.exception.ErrorCase;
 import com.backend.ms_security.repository.PasswordResetTokenRepository;
 import com.backend.ms_security.repository.SessionRepository;
 import com.backend.ms_security.repository.UserRepository;
+import com.backend.ms_security.repository.UserRoleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +54,8 @@ public class AuthService {
     private final GoogleOAuthService googleOAuthService;
     private final GitHubOAuthService gitHubOAuthService;
     private final RestTemplate restTemplate;
+    private final DefaultRoleService defaultRoleService;
+    private final UserRoleRepository userRoleRepository;
 
     @Value("${notification.service.url}")
     private String notificationServiceUrl;
@@ -72,7 +79,9 @@ public class AuthService {
         Optional<Session> pendingChallenge = Optional.ofNullable(dto.getChallengeToken())
                 .filter(token -> !token.isBlank())
                 .map(token -> sessionRepository.findByUserIdAndToken(user.getId(), token))
-                .orElseGet(() -> sessionRepository.findTopByUserIdAndCode2FAIsNotNullOrderByExpirationDesc(user.getId()));
+                .orElseGet(() -> sessionRepository.findTopByUserIdAndCode2FANotOrderByExpirationDesc(user.getId(), ""))
+                // Solo desafios 2FA: nunca se consume ni se borra una sesion JWT activa.
+                .filter(session -> session.getCode2FA() != null && !session.getCode2FA().isBlank());
 
         if (pendingChallenge.isEmpty()) {
             throw unauthorized();
@@ -150,6 +159,37 @@ public class AuthService {
         passwordResetTokenRepository.save(resetToken);
     }
 
+    @Transactional
+    public MeResponseDTO register(RegisterRequestDTO dto) {
+        String email = dto.getEmail().trim();
+        if (userRepository.existsByEmail(email)) {
+            throw new ApplicationException(ErrorCase.ALREADY_EXISTS, "There is already a user with this email.");
+        }
+
+        User user = new User();
+        user.setName(dto.getName().trim());
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        User saved = userRepository.save(user);
+
+        defaultRoleService.assignDefaultRole(saved);
+        return toMe(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public MeResponseDTO me(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(this::unauthorized);
+        return toMe(user);
+    }
+
+    private MeResponseDTO toMe(User user) {
+        List<String> roles = userRoleRepository.findAllByUserId(user.getId()).stream()
+                .map(userRole -> userRole.getRole().getName())
+                .toList();
+        return new MeResponseDTO(user.getId(), user.getName(), user.getEmail(), roles);
+    }
+
     public AuthResponseDTO loginWithGoogle(String credential) {
         return googleOAuthService.loginWithGoogleToken(credential);
     }
@@ -174,6 +214,8 @@ public class AuthService {
     }
 
     private AuthResponseDTO createTwoFactorChallenge(User user) {
+        sessionRepository.deleteByExpirationBefore(ZonedDateTime.now());
+
         sessionRepository.findAllByUserId(user.getId()).stream()
                 .filter(session -> session.getCode2FA() != null && !session.getCode2FA().isBlank())
                 .forEach(sessionRepository::delete);
@@ -244,7 +286,7 @@ public class AuthService {
         );
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
-        restTemplate.postForEntity("http://localhost:5000/send-email", request, Map.class);
+        restTemplate.postForEntity(notificationServiceUrl, request, Map.class);
     }
 
     private boolean isPasswordValid(String password) {

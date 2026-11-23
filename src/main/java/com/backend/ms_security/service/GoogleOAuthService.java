@@ -25,8 +25,9 @@ public class GoogleOAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final DefaultRoleService defaultRoleService;
 
-    @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID}}")
+    @Value("${google.oauth.client-id}")
     private String clientId;
 
     private Boolean coerceBoolean(Object value) {
@@ -39,43 +40,25 @@ public class GoogleOAuthService {
         return false;
     }
 
-    public GoogleOAuthService(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService
-    ) {
-        this(userRepository, passwordEncoder, jwtService, new RestTemplate());
-    }
-
     @Autowired
     public GoogleOAuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RestTemplate restTemplate
+            RestTemplate restTemplate,
+            DefaultRoleService defaultRoleService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.defaultRoleService = defaultRoleService;
     }
 
     public GoogleTokenInfo verifyToken(String credential) {
         String token = credential == null ? "" : credential.trim();
         if (token.isBlank()) {
             throw unauthorized();
-        }
-
-        if ("valid-token".equalsIgnoreCase(token)) {
-            return new GoogleTokenInfo(
-                    "https://accounts.google.com",
-                    clientId,
-                    "ana@gmail.com",
-                    true,
-                    "Ana",
-                    "",
-                    "valid-google-user"
-            );
         }
 
         String url = UriComponentsBuilder
@@ -118,6 +101,8 @@ public class GoogleOAuthService {
 
         User user = userRepository.findByEmail(tokenInfo.email())
                 .orElseGet(() -> createUserFromGoogle(tokenInfo));
+        // Tambien cubre cuentas OAuth creadas antes sin rol.
+        defaultRoleService.assignDefaultRole(user);
 
         return jwtService.generateToken(user);
     }

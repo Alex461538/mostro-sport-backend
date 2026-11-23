@@ -1,5 +1,6 @@
 package com.backend.ms_security.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +29,20 @@ public class DatabaseSeeder {
     private final RolePermissionRepository rolePermissionRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${security.seed.admin-email:admin@uc.edu.co}")
+    private String adminEmail;
+
+    @Value("${security.seed.admin-password:}")
+    private String adminPassword;
+
     @Bean
     CommandLineRunner seedDatabase() {
         return args -> {
             Role adminRole = findOrCreateRole("ADMIN", "Administrador del sistema");
             User adminUser = findOrCreateAdminUser();
-            assignRole(adminUser, adminRole);
+            if (adminUser != null) {
+                assignRole(adminUser, adminRole);
+            }
 
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/users"));
             assignPermission(adminRole, findOrCreatePermission("POST", "/api/users"));
@@ -60,6 +69,29 @@ public class DatabaseSeeder {
             assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/profile"));
             assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/profile"));
             assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/profile"));
+
+            // Administracion de asignaciones y sesiones (panel del front)
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/detail-with-sessions"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/user-roles"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles/users/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/user-roles/roles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/user-roles/{id}/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/role-permissions"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions/roles/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/role-permissions/permissions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/role-permissions/{id}/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/sessions"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/sessions"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/sessions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/sessions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/sessions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/sessions"));
+            assignPermission(adminRole, findOrCreatePermission("POST", "/api/users/{id}/sessions"));
+            assignPermission(adminRole, findOrCreatePermission("GET", "/api/users/{id}/sessions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("PUT", "/api/users/{id}/sessions/{id}"));
+            assignPermission(adminRole, findOrCreatePermission("DELETE", "/api/users/{id}/sessions/{id}"));
         };
     }
 
@@ -73,13 +105,17 @@ public class DatabaseSeeder {
                 });
     }
 
+    // Si no hay contrasena semilla configurada, no se crea el admin por defecto.
     private User findOrCreateAdminUser() {
-        return userRepository.findByEmail("admin@uc.edu.co")
+        return userRepository.findByEmail(adminEmail)
                 .orElseGet(() -> {
+                    if (adminPassword == null || adminPassword.isBlank()) {
+                        return null;
+                    }
                     User user = new User();
                     user.setName("Administrador");
-                    user.setEmail("admin@uc.edu.co");
-                    user.setPassword(passwordEncoder.encode("Admin123!"));
+                    user.setEmail(adminEmail);
+                    user.setPassword(passwordEncoder.encode(adminPassword));
                     return userRepository.save(user);
                 });
     }

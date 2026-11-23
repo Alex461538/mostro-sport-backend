@@ -32,6 +32,7 @@ public class GitHubOAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final DefaultRoleService defaultRoleService;
 
     @Value("${github.oauth.client-id}")
     private String githubClientId;
@@ -42,11 +43,13 @@ public class GitHubOAuthService {
     public GitHubOAuthService(UserRepository userRepository,
                              PasswordEncoder passwordEncoder,
                              JwtService jwtService,
-                             RestTemplate restTemplate) {
+                             RestTemplate restTemplate,
+                             DefaultRoleService defaultRoleService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.defaultRoleService = defaultRoleService;
     }
 
     public String exchangeCodeForAccessToken(String code) {
@@ -92,6 +95,7 @@ public class GitHubOAuthService {
         OAuthUserInfo userInfo = verifyGitHubToken(credential);
         User user = userRepository.findByEmail(userInfo.email())
                 .orElseGet(() -> createUserFromGitHub(userInfo));
+        defaultRoleService.assignDefaultRole(user);
 
         return jwtService.generateToken(user);
     }
@@ -158,8 +162,8 @@ public class GitHubOAuthService {
             }
 
             for (Map<String, Object> item : response.getBody()) {
-                Boolean primary = item.get("primary") instanceof Boolean bool && bool;
-                if (primary || Boolean.TRUE.equals(item.get("verified"))) {
+                // Solo se acepta un correo verificado por GitHub (evita tomar cuentas ajenas).
+                if (Boolean.TRUE.equals(item.get("verified"))) {
                     String email = Objects.toString(item.get("email"), "");
                     if (!email.isBlank()) {
                         return email;

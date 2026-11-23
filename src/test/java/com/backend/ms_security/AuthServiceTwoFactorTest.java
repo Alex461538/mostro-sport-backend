@@ -51,6 +51,32 @@ class AuthServiceTwoFactorTest {
     private AuthService authService;
 
     @Test
+    void verify2faShouldNeverDeleteAnActiveJwtSession() {
+        User user = new User();
+        user.setId(7L);
+        user.setEmail("alice@example.com");
+
+        com.backend.ms_security.entity.Session jwtSession = new com.backend.ms_security.entity.Session();
+        jwtSession.setToken("jwt");
+        jwtSession.setExpiration(java.time.ZonedDateTime.now().plusMinutes(10));
+        jwtSession.setCode2FA(null);
+
+        com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO dto =
+                new com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO();
+        dto.setEmail("alice@example.com");
+        dto.setCode("123456");
+
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
+        when(sessionRepository.findTopByUserIdAndCode2FANotOrderByExpirationDesc(7L, ""))
+                .thenReturn(Optional.of(jwtSession));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.backend.ms_security.exception.ApplicationException.class,
+                () -> authService.verify2fa(dto));
+        verify(sessionRepository, never()).delete(any(com.backend.ms_security.entity.Session.class));
+    }
+
+    @Test
     void loginShouldGenerateTwoFactorChallengeForValidCredentials() {
         User user = new User();
         user.setId(7L);

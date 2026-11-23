@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -60,11 +61,15 @@ public class SecurityConfig {
                                 "/api/auth/login/verify-2fa",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
+                                "/api/auth/register",
                                 "/api/auth/oauth/google",
-                                "/api/auth/oauth/microsoft",
                                 "/api/auth/oauth/github"
                         ).permitAll()
-                        .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/logout", "/api/auth/me").authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/internal/security/permissions-validation"
+                        ).authenticated()
                         .anyRequest().access(dynamicAuthorizationManager)
                 )
                 .oauth2ResourceServer(resourceServer -> resourceServer

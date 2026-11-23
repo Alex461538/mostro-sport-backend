@@ -2,17 +2,22 @@ package com.backend.ms_security.controller;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.dto.auth.ForgotPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.LoginRequestDTO;
+import com.backend.ms_security.dto.auth.MeResponseDTO;
+import com.backend.ms_security.dto.auth.RegisterRequestDTO;
 import com.backend.ms_security.dto.auth.OAuthRequestDTO;
 import com.backend.ms_security.dto.auth.ResetPasswordRequestDTO;
 import com.backend.ms_security.dto.auth.VerifyTwoFactorRequestDTO;
@@ -57,6 +62,17 @@ public class AuthController {
     @PostMapping("/oauth/github")
     public AuthResponseDTO loginWithGitHub(@Valid @RequestBody OAuthRequestDTO dto) {
         return authService.loginWithGitHub(dto.credential());
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MeResponseDTO register(@Valid @RequestBody RegisterRequestDTO dto) {
+        return authService.register(dto);
+    }
+
+    @GetMapping("/me")
+    public MeResponseDTO me(@AuthenticationPrincipal Jwt jwt) {
+        return authService.me(Long.valueOf(jwt.getSubject()));
     }
 
     @PostMapping("/logout")

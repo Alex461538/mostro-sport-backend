@@ -2,8 +2,10 @@ package com.backend.ms_security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
@@ -21,12 +23,16 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.backend.ms_security.dto.auth.AuthResponseDTO;
 import com.backend.ms_security.entity.User;
+import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.repository.SessionRepository;
 import com.backend.ms_security.repository.UserRepository;
+import com.backend.ms_security.service.DefaultRoleService;
 import com.backend.ms_security.service.GitHubOAuthService;
 import com.backend.ms_security.service.GoogleOAuthService;
 import com.backend.ms_security.service.JwtService;
@@ -94,15 +100,44 @@ class GoogleOAuthLoginTest {
                 )
         ));
 
-        GoogleOAuthService service = new GoogleOAuthService(userRepository, new BCryptPasswordEncoder(12), jwtService);
+        RestTemplate googleRestTemplate = mock(RestTemplate.class);
+        when(googleRestTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(Map.class)))
+                .thenReturn(Map.of(
+                        "iss", "https://accounts.google.com",
+                        "aud", "test-client-id",
+                        "email", "ana@gmail.com",
+                        "email_verified", "true",
+                        "name", "Ana",
+                        "sub", "google-sub"
+                ));
 
-        AuthResponseDTO response = service.loginWithGoogleToken("valid-token");
+        DefaultRoleService defaultRoleService = mock(DefaultRoleService.class);
+        GoogleOAuthService service = new GoogleOAuthService(
+                userRepository, new BCryptPasswordEncoder(12), jwtService, googleRestTemplate, defaultRoleService);
+        ReflectionTestUtils.setField(service, "clientId", "test-client-id");
+
+        AuthResponseDTO response = service.loginWithGoogleToken("google-id-token");
+        verify(defaultRoleService).assignDefaultRole(user);
 
         assertNotNull(response);
         assertEquals("Bearer", response.tokenType());
         assertNotNull(response.accessToken());
         assertNotNull(response.expiresAt());
         assertTrue(response.expiresAt().isAfter(Instant.now()));
+    }
+
+    @Test
+    void shouldRejectFakeGoogleTokenWhenGoogleDoesNotValidateIt() {
+        RestTemplate googleRestTemplate = mock(RestTemplate.class);
+        when(googleRestTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(Map.class)))
+                .thenThrow(new RestClientException("invalid token"));
+
+        GoogleOAuthService service = new GoogleOAuthService(
+                mock(UserRepository.class), new BCryptPasswordEncoder(12), mock(JwtService.class),
+                googleRestTemplate, mock(DefaultRoleService.class));
+        ReflectionTestUtils.setField(service, "clientId", "test-client-id");
+
+        assertThrows(ApplicationException.class, () -> service.loginWithGoogleToken("valid-token"));
     }
 
     @Test
@@ -138,7 +173,7 @@ class GoogleOAuthLoginTest {
                 ArgumentMatchers.eq(Map.class)
         )).thenReturn(ResponseEntity.ok(Map.of("email", "ana@github.com", "login", "ana", "name", "Ana")));
 
-        GitHubOAuthService service = new GitHubOAuthService(userRepository, new BCryptPasswordEncoder(12), jwtService, gitHubRestTemplate);
+        GitHubOAuthService service = new GitHubOAuthService(userRepository, new BCryptPasswordEncoder(12), jwtService, gitHubRestTemplate, mock(DefaultRoleService.class));
         AuthResponseDTO response = service.loginWithGitHubToken("valid-github-token");
 
         assertNotNull(response);
