@@ -37,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private static final int TWO_FA_CODE_LENGTH = 6;
     private static final int TWO_FA_TTL_MINUTES = 3;
     private static final int RESET_TOKEN_TTL_MINUTES = 15;
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[\\S]{8,72}$");

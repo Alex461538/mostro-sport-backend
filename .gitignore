@@ -1,6 +1,14 @@
 HELP.md
 ### Credentials ###
 src/main/resources/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+application-*.properties
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
