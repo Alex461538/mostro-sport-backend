@@ -69,10 +69,12 @@ public class GitHubOAuthService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = new RestTemplate().postForEntity(
+            ResponseEntity<Map<String, Object>> response = new RestTemplate().exchange(
                     "https://github.com/login/oauth/access_token",
+                    HttpMethod.POST,
                     request,
-                    Map.class
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
             Map<String, Object> payload = response.getBody();
@@ -112,11 +114,12 @@ public class GitHubOAuthService {
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     "https://api.github.com/user",
                     HttpMethod.GET,
                     request,
-                    Map.class
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
             Map<String, Object> payload = response.getBody();

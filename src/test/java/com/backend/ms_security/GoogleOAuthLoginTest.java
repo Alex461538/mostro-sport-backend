@@ -19,6 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +42,6 @@ class GoogleOAuthLoginTest {
 
     @Test
     void shouldCreateSessionRecordWhenJwtIsGenerated() {
-        UserRepository userRepository = mock(UserRepository.class);
         SessionRepository sessionRepository = mock(SessionRepository.class);
         User user = new User();
         user.setId(77L);
@@ -170,7 +170,7 @@ class GoogleOAuthLoginTest {
                 ArgumentMatchers.eq("https://api.github.com/user"),
                 ArgumentMatchers.eq(HttpMethod.GET),
                 ArgumentMatchers.any(HttpEntity.class),
-                ArgumentMatchers.eq(Map.class)
+                ArgumentMatchers.<ParameterizedTypeReference<Map<String, Object>>>any()
         )).thenReturn(ResponseEntity.ok(Map.of("email", "ana@github.com", "login", "ana", "name", "Ana")));
 
         GitHubOAuthService service = new GitHubOAuthService(userRepository, new BCryptPasswordEncoder(12), jwtService, gitHubRestTemplate, mock(DefaultRoleService.class));
