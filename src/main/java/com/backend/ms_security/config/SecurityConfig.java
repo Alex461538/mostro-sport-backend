@@ -62,7 +62,7 @@ public class SecurityConfig {
                                 "/api/auth/oauth/microsoft",
                                 "/api/auth/oauth/github"
                         ).permitAll()
-                        .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/logout", "/api/internal/security/permissions-validation").authenticated()
                         .anyRequest().access(dynamicAuthorizationManager)
                 )
                 .oauth2ResourceServer(resourceServer -> resourceServer

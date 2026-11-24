@@ -1,0 +1,97 @@
+package com.backend.ms_security.config;
+
+import java.util.List;
+
+/**
+ * Permisos del núcleo deportivo y catálogos (Participantes A y C).
+ */
+final class BusinessCorePermissions {
+
+    private BusinessCorePermissions() {
+    }
+
+    static List<BusinessPermissionDef> all() {
+        return List.of(
+            new BusinessPermissionDef("POST", "/api/v1/deportes", false),
+            new BusinessPermissionDef("GET", "/api/v1/deportes", true),
+            new BusinessPermissionDef("GET", "/api/v1/deportes/{id}", true),
+            new BusinessPermissionDef("GET", "/api/v1/deportes/{id}/subdeportes", true),
+            new BusinessPermissionDef("PUT", "/api/v1/deportes/{id}", false),
+            new BusinessPermissionDef("PATCH", "/api/v1/deportes/{id}/estado", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/deportes/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/equipos", false),
+            new BusinessPermissionDef("GET", "/api/v1/equipos", true),
+            new BusinessPermissionDef("GET", "/api/v1/equipos/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/equipos/{id}", false),
+            new BusinessPermissionDef("PATCH", "/api/v1/equipos/{id}/estado", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/equipos/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/equipos/{id}/deportes/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/equipos/{id}/deportes/{id}", false),
+            new BusinessPermissionDef("GET", "/api/v1/equipos/{id}/deportes", true),
+            new BusinessPermissionDef("GET", "/api/v1/deportes/{id}/equipos", true),
+            new BusinessPermissionDef("POST", "/api/v1/equipos/{id}/jugadores", false),
+            new BusinessPermissionDef("PUT", "/api/v1/equipos/{id}/jugadores/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/equipos/{id}/jugadores/{id}", false),
+            new BusinessPermissionDef("GET", "/api/v1/equipos/{id}/jugadores", true),
+            new BusinessPermissionDef("GET", "/api/v1/jugadores/{id}/equipos", true),
+            new BusinessPermissionDef("POST", "/api/v1/jugadores", false),
+            new BusinessPermissionDef("GET", "/api/v1/jugadores", true),
+            new BusinessPermissionDef("GET", "/api/v1/jugadores/{id}", true),
+            new BusinessPermissionDef("GET", "/api/v1/jugadores/{id}/perfil", true),
+            new BusinessPermissionDef("PUT", "/api/v1/jugadores/{id}", false),
+            new BusinessPermissionDef("PATCH", "/api/v1/jugadores/{id}/estado", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/jugadores/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/torneos", false),
+            new BusinessPermissionDef("GET", "/api/v1/torneos", true),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}", true),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/estructura", true),
+            new BusinessPermissionDef("PUT", "/api/v1/torneos/{id}", false),
+            new BusinessPermissionDef("PATCH", "/api/v1/torneos/{id}/estado", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/torneos/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/torneos/{id}/inscripciones", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/torneos/{id}/inscripciones/{id}", false),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/inscripciones", true),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/equipos", true),
+            new BusinessPermissionDef("GET", "/api/v1/equipos/{id}/torneos", true),
+            new BusinessPermissionDef("POST", "/api/v1/torneos/{id}/fases", false),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/fases", true),
+            new BusinessPermissionDef("GET", "/api/v1/fases/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/fases/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/fases/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/fases/{id}/grupos", false),
+            new BusinessPermissionDef("GET", "/api/v1/fases/{id}/grupos", true),
+            new BusinessPermissionDef("GET", "/api/v1/grupos/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/grupos/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/grupos/{id}", false),
+            new BusinessPermissionDef("GET", "/api/v1/grupos/{id}/equipos", true),
+            new BusinessPermissionDef("POST", "/api/v1/grupos/{id}/equipos", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/grupos/{id}/equipos/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/torneos/{id}/fase-final", false),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/fase-final", true),
+            new BusinessPermissionDef("PUT", "/api/v1/torneos/{id}/fase-final", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/torneos/{id}/fase-final", false),
+            new BusinessPermissionDef("POST", "/api/v1/escenarios", false),
+            new BusinessPermissionDef("GET", "/api/v1/escenarios", true),
+            new BusinessPermissionDef("GET", "/api/v1/escenarios/{id}", true),
+            new BusinessPermissionDef("GET", "/api/v1/escenarios/{id}/subescenarios", true),
+            new BusinessPermissionDef("POST", "/api/v1/escenarios/{id}/subescenarios", false),
+            new BusinessPermissionDef("PUT", "/api/v1/escenarios/{id}", false),
+            new BusinessPermissionDef("PATCH", "/api/v1/escenarios/{id}/estado", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/escenarios/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/torneos/{id}/escenarios/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/torneos/{id}/escenarios/{id}", false),
+            new BusinessPermissionDef("GET", "/api/v1/torneos/{id}/escenarios", true),
+            new BusinessPermissionDef("GET", "/api/v1/escenarios/{id}/torneos", true),
+            new BusinessPermissionDef("POST", "/api/v1/habilidades", false),
+            new BusinessPermissionDef("GET", "/api/v1/habilidades", true),
+            new BusinessPermissionDef("GET", "/api/v1/habilidades/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/habilidades/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/habilidades/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/metodos-pago", false),
+            new BusinessPermissionDef("GET", "/api/v1/metodos-pago", true),
+            new BusinessPermissionDef("GET", "/api/v1/metodos-pago/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/metodos-pago/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/metodos-pago/{id}", false)
+        );
+    }
+}

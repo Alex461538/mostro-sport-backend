@@ -16,11 +16,15 @@ import com.backend.ms_security.repository.PermissionRepository;
 import com.backend.ms_security.repository.RolePermissionRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PermissionService {
-    private static final Pattern ID_SEGMENT_PATTERN = Pattern.compile("(?i)(?<=/)(?:\\d+|[a-f0-9]{24})(?=/|$)");
+    // Segmento de id: numerico, ObjectId (24 hex) o UUID.
+    private static final Pattern ID_SEGMENT_PATTERN = Pattern.compile(
+            "(?i)(?<=/)(?:\\d+|[a-f0-9]{24}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})(?=/|$)");
 
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
@@ -90,10 +94,12 @@ public class PermissionService {
 
         String normalizedUrl = normalizeUrl(requestUrl);
 
-        System.out.println(normalizedUrl);
-        System.out.println(permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl).toArray().length);
-        return !permissionRepository.findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl)
+        boolean allowed = !permissionRepository
+                .findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl)
                 .isEmpty();
+        log.debug("Permission check user={} {} {} (normalized {}) -> {}",
+                userId, httpMethod, requestUrl, normalizedUrl, allowed);
+        return allowed;
     }
 
     String normalizeUrl(String requestUrl) {
