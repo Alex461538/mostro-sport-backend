@@ -32,6 +32,7 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
+    private final DefaultRoleService defaultRoleService;
 
     @Value("${github.oauth.client-id:${GITHUB_CLIENT_ID:}}")
     private String githubClientId;
@@ -42,11 +43,13 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
     public GitHubOAuthService(UserRepository userRepository,
                              PasswordEncoder passwordEncoder,
                              JwtService jwtService,
-                             RestTemplate restTemplate) {
+                             RestTemplate restTemplate,
+                             DefaultRoleService defaultRoleService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
+        this.defaultRoleService = defaultRoleService;
     }
 
     public String exchangeCodeForAccessToken(String code) {
@@ -71,10 +74,12 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = new RestTemplate().postForEntity(
+            ResponseEntity<Map<String, Object>> response = new RestTemplate().exchange(
                     "https://github.com/login/oauth/access_token",
+                    HttpMethod.POST,
                     request,
-                    Map.class
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
             Map<String, Object> payload = response.getBody();
@@ -103,6 +108,7 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
         OAuthUserInfo userInfo = verifyGitHubToken(credential);
         User user = userRepository.findByEmail(userInfo.email())
                 .orElseGet(() -> createUserFromGitHub(userInfo));
+        defaultRoleService.assignDefaultRole(user);
 
         return jwtService.generateToken(user);
     }
@@ -119,11 +125,12 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     "https://api.github.com/user",
                     HttpMethod.GET,
                     request,
-                    Map.class
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
             Map<String, Object> payload = response.getBody();
@@ -169,8 +176,8 @@ public class GitHubOAuthService implements GitHubOAuthAuthenticator {
             }
 
             for (Map<String, Object> item : response.getBody()) {
-                Boolean primary = item.get("primary") instanceof Boolean bool && bool;
-                if (primary || Boolean.TRUE.equals(item.get("verified"))) {
+                // Solo se acepta un correo verificado por GitHub (evita tomar cuentas ajenas).
+                if (Boolean.TRUE.equals(item.get("verified"))) {
                     String email = Objects.toString(item.get("email"), "");
                     if (!email.isBlank()) {
                         return email;

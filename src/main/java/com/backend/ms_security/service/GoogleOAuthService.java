@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,13 +17,18 @@ import com.backend.ms_security.exception.ApplicationException;
 import com.backend.ms_security.exception.ErrorCase;
 import com.backend.ms_security.repository.UserRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Service
-public class GoogleOAuthService implements GoogleOAuthAuthenticator {
+public class GoogleOAuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RestTemplate restTemplate;
-    private final String clientId;
+    private final DefaultRoleService defaultRoleService;
+
+    @Value("${google.oauth.client-id}")
+    private String clientId;
 
     private Boolean coerceBoolean(Object value) {
         if (value instanceof Boolean bool) {
@@ -36,59 +40,25 @@ public class GoogleOAuthService implements GoogleOAuthAuthenticator {
         return false;
     }
 
-    public GoogleOAuthService(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService
-    ) {
-        this(userRepository, passwordEncoder, jwtService, new RestTemplate(), "");
-    }
-
-    public GoogleOAuthService(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            RestTemplate restTemplate
-    ) {
-        this(userRepository, passwordEncoder, jwtService, restTemplate, "");
-    }
-
     @Autowired
     public GoogleOAuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             RestTemplate restTemplate,
-            @Value("${google.oauth.client-id:${GOOGLE_CLIENT_ID:}}") String clientId
+            DefaultRoleService defaultRoleService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.restTemplate = restTemplate;
-        this.clientId = clientId;
-    }
-
-    @Override
-    public AuthResponseDTO authenticate(String credential) {
-        return loginWithGoogleToken(credential);
+        this.defaultRoleService = defaultRoleService;
     }
 
     public GoogleTokenInfo verifyToken(String credential) {
         String token = credential == null ? "" : credential.trim();
         if (token.isBlank()) {
             throw unauthorized();
-        }
-
-        if ("valid-token".equalsIgnoreCase(token)) {
-            return new GoogleTokenInfo(
-                    "https://accounts.google.com",
-                    clientId,
-                    "ana@gmail.com",
-                    true,
-                    "Ana",
-                    "",
-                    "valid-google-user"
-            );
         }
 
         String url = UriComponentsBuilder
@@ -131,6 +101,8 @@ public class GoogleOAuthService implements GoogleOAuthAuthenticator {
 
         User user = userRepository.findByEmail(tokenInfo.email())
                 .orElseGet(() -> createUserFromGoogle(tokenInfo));
+        // Tambien cubre cuentas OAuth creadas antes sin rol.
+        defaultRoleService.assignDefaultRole(user);
 
         return jwtService.generateToken(user);
     }

@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.backend.ms_security.dto.permission.PermissionResponseDTO;
 import com.backend.ms_security.dto.role.RoleResponseDTO;
 import com.backend.ms_security.dto.rolepermission.PermissionRoleResponseDTO;
 import com.backend.ms_security.dto.rolepermission.RolePermissionResponseDTO;

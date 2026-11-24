@@ -37,11 +37,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
 
         String method = context.getRequest().getMethod();
         String url = context.getRequest().getRequestURI();
-
-        System.out.println(userId);
-        System.out.println(context.getRequest().getMethod());
-        System.out.println(context.getRequest().getRequestURI());
-
+        System.out.println("Se me mete al rancho");
         boolean permitted = permissionService.hasPermission(userId, method, url);
         return new AuthorizationDecision(permitted);
     }

@@ -1,6 +1,15 @@
 HELP.md
 ### Credentials ###
+.env
 src/main/resources/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+application-*.properties
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -33,3 +42,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+/context
+run.sh

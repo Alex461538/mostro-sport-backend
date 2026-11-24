@@ -1,6 +1,7 @@
 package com.backend.ms_security.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
@@ -95,7 +96,7 @@ public class PermissionService {
         String normalizedUrl = normalizeUrl(requestUrl);
 
         boolean allowed = !permissionRepository
-                .findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(), normalizedUrl)
+                .findByUserIdAndMethodAndUrl(userId, httpMethod.toUpperCase(Locale.ROOT), normalizedUrl)
                 .isEmpty();
         log.debug("Permission check user={} {} {} (normalized {}) -> {}",
                 userId, httpMethod, requestUrl, normalizedUrl, allowed);
