@@ -87,7 +87,7 @@ public class ProfileService {
         return profileMapper.toResponseDTO(updatedProfile);
     }
 
-    public ProfileResponseDTO update(Long userId, CreateProfileDTO dto) {
+    public ProfileResponseDTO updateByUserId(Long userId, UpdateProfileDTO dto) {
         Profile profile = findProfileByUserId(userId);
         profileMapper.updateEntity(dto, profile);
         Profile updatedProfile = profileRepository.save(profile);

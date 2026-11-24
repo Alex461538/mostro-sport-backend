@@ -95,7 +95,18 @@ final class BusinessOperationsPermissions {
             new BusinessPermissionDef("GET", "/api/v1/stubs/jugadores", true),
             new BusinessPermissionDef("GET", "/api/v1/stubs/pelotas", true),
             new BusinessPermissionDef("GET", "/api/v1/stubs/habilidades", true),
-            new BusinessPermissionDef("GET", "/api/v1/stubs/metodos-pago", true)
+            new BusinessPermissionDef("GET", "/api/v1/stubs/metodos-pago", true),
+            new BusinessPermissionDef("POST", "/api/v1/habilidades", false),
+            new BusinessPermissionDef("GET", "/api/v1/habilidades", true),
+            new BusinessPermissionDef("GET", "/api/v1/habilidades/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/habilidades/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/habilidades/{id}", false),
+            new BusinessPermissionDef("POST", "/api/v1/metodos-pago", false),
+            new BusinessPermissionDef("GET", "/api/v1/metodos-pago", true),
+            new BusinessPermissionDef("GET", "/api/v1/metodos-pago/{id}", true),
+            new BusinessPermissionDef("PUT", "/api/v1/metodos-pago/{id}", false),
+            new BusinessPermissionDef("DELETE", "/api/v1/metodos-pago/{id}", false),
+            new BusinessPermissionDef("PUT", "/api/v1/aficionados/{id}/metodos-pago/{id}", true)
         );
     }
 }

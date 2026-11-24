@@ -1,6 +1,6 @@
 package com.backend.ms_security.dto.profile;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 
 import lombok.Value;
 
@@ -8,5 +8,6 @@ import lombok.Value;
 public class ProfileResponseDTO {
     Long id;
     String phone;
-    ZonedDateTime birthDate;
+    LocalDate birthDate;
+    String photoUrl;
 }

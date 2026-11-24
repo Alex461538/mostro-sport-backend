@@ -1,6 +1,6 @@
 package com.backend.ms_security.entity;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,7 +29,10 @@ public class Profile {
     private String phone;
 
     @Column(nullable = false)
-    private ZonedDateTime birthDate;
+    private LocalDate birthDate;
+
+    @Column(length = 2048)
+    private String photoUrl;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)

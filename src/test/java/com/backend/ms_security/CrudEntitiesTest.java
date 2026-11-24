@@ -2,6 +2,7 @@ package com.backend.ms_security;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ class CrudEntitiesTest {
 
         Profile profile = new Profile();
         profile.setPhone("123456789");
-        profile.setBirthDate(ZonedDateTime.now());
+        profile.setBirthDate(LocalDate.of(1983, 11, 9));
         profile.setUser(user);
         user.setProfile(profile);
         assertNotNull(profile);
@@ -65,7 +66,7 @@ class CrudEntitiesTest {
 
         CreateProfileDTO profileDto = new CreateProfileDTO();
         profileDto.setPhone("987654321");
-        profileDto.setBirthDate(ZonedDateTime.now());
+        profileDto.setBirthDate(LocalDate.of(1983, 11, 9));
         assertNotNull(profileDto);
 
         CreateSessionDTO sessionDto = new CreateSessionDTO();

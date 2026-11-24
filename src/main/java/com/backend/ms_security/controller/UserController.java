@@ -84,8 +84,8 @@ public class UserController {
     @PutMapping("/{userId}/profile")
     public com.backend.ms_security.dto.profile.ProfileResponseDTO updateProfile(
             @PathVariable Long userId,
-            @Valid @RequestBody CreateProfileDTO dto) {
-        return profileService.update(userId, dto);
+            @Valid @RequestBody com.backend.ms_security.dto.profile.UpdateProfileDTO dto) {
+        return profileService.updateByUserId(userId, dto);
     }
 
     @GetMapping("/{userId}/profile")
